@@ -1,5 +1,10 @@
 import Vue from 'vue'
-import App from './App.vue'
+import App from './App'
+import BootstrapVue from 'bootstrap-vue'
+import VueVega from 'vue-vega'
+Vue.use(VueVega)
+
+Vue.use(BootstrapVue);
 
 Vue.config.productionTip = false
 
