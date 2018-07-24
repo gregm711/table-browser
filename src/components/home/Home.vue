@@ -17,13 +17,13 @@
                 <button class="btn btn-outline-secondary" type="button">Enter the correct slope</button>
             </div>
         </div>
-        <div class="column-selector-container">
+        <!-- <div class="column-selector-container">
           <h4>Shown Columns</h4>
             <b-form-group >
                 <b-form-checkbox-group stacked style="text-align: left;" v-model="selected" name="columns-selected" :options="options">
                 </b-form-checkbox-group>
             </b-form-group>
-        </div>
+        </div> -->
         <div class="column-selector-container">
           <h4>Group by</h4>
             <b-form-group >
@@ -38,180 +38,192 @@
 <script>
 import TableViewer from './TableViewer'
 import Papa from 'papaparse'
-import sql from 'sql.js'
-import sizeof from 'object-sizeof';
 import alasql from 'alasql'
+import moment from 'moment'
 
 
 export default {
-  name: 'Home',
-  data () {
-    return {
-      rows: [],
-      query: "",
-      selected: [], // Must be an array reference!
-      columns : ['WKR_ID',	'L1_KEY',	'DSG_CHG_ID',	'L1_DSG_CHG_PRT_NO',	'L1_BASIC_PRT_NO',
-      'L1_DSG_CHG_NO',	'SUPLR_NO',	'BUYER_DESK_ID',	'BUYER_USER_ID',
-      'BUYER_STG_ID',	'SUPLR_STG_ID',	'PRT_TPE',	'RFQ_NO',	'BASE_CURR',
-      'DUE_DT',	'Q_CAL_FINAL_TOT_CS',	'QUOTE_NO',	'CURRNT_OWNER',
-      'CURRENT_DESK_ID',	'CURRENT_USER_ID',	'WRK_STATUS',	'Q_BUYER_STATUS',
-      'Q_SUPLR_STATUS',	'IS_TOOL_ATTCHD',	'VERSION',	'CREATED_USER_ID',
-      'CREATED_DT_TS',	'UPDATED_USER_ID',	'UPDATED_DT_TS',	'WKR_LIST_COMMENT'],
-      distributions: [],
-      encodings: [],
-      options: [],
-      grouped: [],
-    }
-  },
-
-  watch: {
-      selected: function (val) {
-
-        var query = "SELECT ";
-        if (this.selected.length != this.columns.length) {
-        this.selected.forEach((elem) =>{
-          query += elem + ", ";
-        })
-        query = query.slice(0, -2);
-        query += " FROM tableName";
-        query = query.replace(/,\s*$/, "");
-        this.executeQuery(query)
-      }
-      },
-      grouped: function (val) {
-
-        var query = "SELECT ";
-        if (this.selected.length != this.columns.length) {
-        this.selected.forEach((elem) =>{
-          query += elem + ", ";
-        })
-        query = query.slice(0, -2);
-        query += " FROM tableName";
-        query = query.replace(/,\s*$/, "");
-        this.executeQuery(query)
-      }
-      },
-      rows: function (val) {
-        this.createDistributions();
-      }
-    },
-  components: {
-    TableViewer
-  },
-  methods:{
-    upload(e) {
-        const that = this
-        const fileToLoad = event.target.files[0]
-        const reader = new FileReader()
-        reader.onload = fileLoadedEvent => {
-          var batchArr = []
-          that.createDB();
-          Papa.parse(fileLoadedEvent.target.result, {
-            header: true,
-            fastMode: true,
-            dynamicTyping: true,
-
-            // step: function(row) {
-            //   batchArr.push(row.data)
-            //   if (batchArr.length == 1000) {
-            //
-            //     that.addDataToDB(batchArr)
-            //     batchArr = [];
-            //     console.log("batch")
-            //     }
-          	// },
-        	   complete: function(results) {
-               console.log("all done")
-                that.rows = results.data;
-                that.createAlasqDB()
-            	},
-              error(errors) {
-                  console.log('error', errors)
-              }
-          })
-
+    name: 'Home',
+    data() {
+        return {
+            rows: [],
+            tableName: "tab",
+            query: "",
+            selected: [], // Must be an array reference!
+            columns: [],
+            distributions: [],
+            encodings: [],
+            options: [],
+            grouped: [],
+            db: false,
+            dbInsert: null,
         }
-        reader.readAsText(fileToLoad)
     },
 
-    createAlasqDB(){
+    watch: {
+        selected: function(val) {
+            let difference = this.columns.filter(x => !this.selected.includes(x));
+            console.log(difference)
+            for (let i = 0; i < difference.length; i++) {
+                var res = alasql('SELECT * REMOVE COLUMN ' + difference[i] + ' FROM ' + this.tableName)
 
-      var sqlstr = "CREATE TABLE tableName (";
-      for (let i = 0; i < this.columns.length; i++) {
+                this.rows = res
 
-          const type = "varchar"
-
-          if (i == this.columns.length - 1) {
-              sqlstr += this.columns[i] + " " + type;
-          } else {
-              sqlstr += this.columns[i] + " " + type + ", ";
-          }
-      }
-      sqlstr += ")";
-      alasql(sqlstr);
-      alasql.tables.tableName.data = this.rows
-    },
-
-    createDistributions(){
-
-        var newDistributions = [];
-
-        var newEncodings = [];
-        for (var i =0; i < this.columns.length; i++){
-          let groupQuery = "SELECT " + this.columns[i] + ",  COUNT(*) FROM  tableName GROUP BY " + this.columns[i] + ";"
-          let res = alasql(groupQuery);
-          var newData = [];
-          for (var j = 0; j < res.length; j++) {
-            let row   = res[j]
-            let keys  = Object.keys(row)
-            let entry = {a: row[keys[0]], b: row[keys[1]]}
-
-            newData.push(entry)
-          }
-        let encoding = {
-            x: {field: 'a', type: 'ordinal'},
-            y: {field: 'b', type: 'quantitative'}
-          }
-
-          newDistributions.push(newData)
-          newEncodings.push(encoding)
-        }
-
-        this.distributions = newDistributions;
-        this.encodings = newEncodings;
-
-    },
-    createDB() {
-        this.db = new sql.Database();
-        var sqlstr = "CREATE TABLE tableName (";
-        for (let i = 0; i < this.columns.length; i++) {
-            const type = "varchar"
-
-            if (i == this.columns.length - 1) {
-                sqlstr += this.columns[i] + " " + type;
-            } else {
-                sqlstr += this.columns[i] + " " + type + ", ";
             }
+        },
+        grouped: function(val) {
+
+            var query = "SELECT ";
+            if (this.selected.length != this.columns.length) {
+                this.selected.forEach((elem) => {
+                    query += elem + ", ";
+                })
+                query = query.slice(0, -2);
+                query += " FROM " + this.tableName;
+                query = query.replace(/,\s*$/, "");
+                this.executeQuery(query)
+            }
+        },
+        rows: function(val) {
+
+            this.columns = Object.keys(this.rows[0])
+            this.createdSelected()
+            this.createDistributions();
         }
-        sqlstr += ");";
-        this.db.run(sqlstr);
+    },
+    components: {
+        TableViewer
+    },
+    methods: {
+        upload(e) {
+            const that = this
+            const fileToLoad = event.target.files[0]
+            const reader = new FileReader()
+            reader.onload = fileLoadedEvent => {
+
+                Papa.parse(fileLoadedEvent.target.result, {
+                    header: true,
+                    fastMode: true,
+                    dynamicTyping: true,
+                    step: function(row) {
+                        if (!that.db) {
+                            that.createAlasqDB(row.data[0])
+                        }
+                        that.dbInsert(row.data[0])
+                    },
+                    complete: function() {
+                        var res = alasql("SELECT * FROM " + that.tableName)
+                        that.rows = res;
+                    },
+                    error(errors) {
+                        console.log('error', errors)
+                    }
+                })
+
+            }
+            reader.readAsText(fileToLoad)
+        },
+        createAlasqDB(row) {
+            var insertFunction = 'INSERT INTO  ' + this.tableName + '  ('
+            var sqlstr = "CREATE TABLE " + this.tableName + " (";
+
+            var formats = [
+                moment.ISO_8601,
+                "MM/DD/YYYY  :)  HH*mm*ss",
+                "MM/DD/YY "
+            ];
+            for (var key in row) {
+              if (typeof row[key] == "string") {
+              let tmp = moment(row[key])
+              if (tmp.isValid()){
+                  sqlstr += key + "  Date, "
+                  insertFunction += ":" + key + ","
+                }
+                else{
+                  sqlstr += key + " " + typeof row[key] + ", "
+                  insertFunction += ":" + key + ","
+                }
+              }else{;
+                sqlstr += key + " " + typeof row[key] + ", "
+                insertFunction += ":" + key + ","
+              }
+            }
+            sqlstr = sqlstr.slice(0, -2);
+            insertFunction = insertFunction.slice(0, -1);
+            insertFunction += ")";
+            sqlstr += ")";
+            alasql(sqlstr);
+            let indexStr = "CREATE INDEX " + Object.keys(row)[0]  + " ON " + this.tableName + "(" + Object.keys(row)[0] + ")";
+            alasql(indexStr)
+            this.db = true;
+            this.dbInsert = alasql.compile(insertFunction)
+        },
+
+
+        createDistributions() {
+
+            var newDistributions = [];
+
+            var newEncodings = [];
+            for (let i = 0; i < this.columns.length; i++) {
+                let groupQuery = "SELECT " + this.columns[i] + ",  COUNT(*) FROM " + this.tableName + "  GROUP BY " + this.columns[i] + ";"
+                let res = alasql(groupQuery);
+                var newData = [];
+                for (let j = 0; j < res.length; j++) {
+                    let row = res[j]
+                    let keys = Object.keys(row)
+                    let entry = {
+                        values: row[keys[0]],
+                        count: row[keys[1]]
+                    }
+
+                    newData.push(entry)
+                }
+                let encoding = {
+                    x: {
+                        field: 'values',
+                        type: 'ordinal'
+                    },
+                    y: {
+                        field: 'count',
+                        type: 'quantitative'
+                    }
+                }
+
+                newDistributions.push(newData)
+                newEncodings.push(encoding)
+            }
+
+            this.distributions = newDistributions;
+            this.encodings = newEncodings;
+
+        },
+        createdSelected() {
+            for (let i = 0; i < this.columns.length; i++) {
+                this.selected.push(this.columns[i])
+                this.options.push({
+                    text: this.columns[i],
+                    value: this.columns[i]
+                })
+            }
+        },
+        executeQuery(query) {
+            var res = alasql(query);
+            this.rows = res
+
+
+        },
 
     },
+    mounted: function () {
+      console.log("asd")
 
-    executeQuery(query) {
-      var res = alasql(query);
-      this.rows = res
-      this.columns = Object.keys(res[0])
-    },
-  },
 
-  mounted: function () {
-    for (let i = 0; i < this.columns.length; i++){
 
-      this.selected.push(this.columns[i])
-      this.options.push({text: this.columns[i], value: this.columns[i]})
-      }
-    },
+
+
+}
+
 }
 </script>
 

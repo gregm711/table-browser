@@ -1,8 +1,6 @@
 <template>
   <div class="table-viewer">
     <div class="container">
-
-
   <div class="columns">
     <div class="menu-container column">
       <div class="menu"></div>
@@ -10,7 +8,7 @@
     <div class="demo column is-two-thirds">
       <div class="column-dists-wrapper">
         <div v-for="(value, i) in distributions" class="column-dist">
-        <vega-lite :data="distributions[i]" mark="bar"  :encoding="encodings[i]"/>
+        <vega-lite :data="distributions[i]" mark="bar"  :encoding="encodings[i]" autoResize="true"/>
       </div>
       </div>
       <div id="myGrid" style="height:600px;" class="slickgrid-container"></div>
@@ -22,9 +20,8 @@
 </template>
 
 <script>
-import Papa from 'papaparse'
-import sql from 'sql.js'
 import { Grid, Data, Formatters } from 'slickgrid-es6';
+
 
 export default {
   name: 'TableViewer',
@@ -55,27 +52,21 @@ watch: {
         forceFitColumns: false,
         fullWidthRows: true,
         showHeaderRow: true,
-        defaultColumnWidth: 100,
+        defaultColumnWidth: 200,
         asyncEditorLoading: true,
         enableAsyncPostRender: true,
         };
-
-   //
    const dataView = new Data.DataView();
     var formattedData = [];
     for (let i = 0; i < this.rows.length; i++){
-
       const d = this.rows[i];
       d.id = i
       formattedData.push(d)
     }
     dataView.setItems(formattedData); // some data
-
-
-    var columns = this.columns;
     var formattedColumns = [];
-    for (let i =0; i < columns.length; i++){
-      var dict = {name: columns[i],  field: columns[i],  id: columns[i],  selectable: true, sortable: true, }
+    for (let i =0; i < this.columns.length; i++){
+      var dict = {name: this.columns[i],  field: this.columns[i],  id: this.columns[i],  selectable: true, sortable: true, }
       formattedColumns.push(dict)
     }
         const grid = new Grid('#myGrid', dataView, formattedColumns, options);
@@ -89,18 +80,19 @@ watch: {
 <style lang="scss" scoped="true">
 .table-viewer{
   float: left;
-  width: 70%;
+  width: 80%;
   margin: 0 auto;
   .column-dists-wrapper {
     width:100%;
-   height:400px;
+  //  height:400px;
    overflow:scroll;
    white-space: nowrap;
   .column-dist{
     display:inline-block;
-    width:100px;
-    height:200px;
+    width:200px;
+    height:300px;
     border:1px solid;
+    overflow: hidden;
     line-height:80px;
     text-align:center;
     margin-bottom:4px;
