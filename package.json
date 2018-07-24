@@ -18,7 +18,9 @@
     "slickgrid-es6": "^3.0.1",
     "vue": "^2.5.16",
     "vue-scroll-sync": "^1.0.4",
-    "vue-vega": "^1.0.0-alpha.13"
+    "vue-sparklines": "^0.1.6",
+    "vue-vega": "^1.0.0-alpha.13",
+    "vuetrend": "^0.3.2"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.0.0-rc.5",

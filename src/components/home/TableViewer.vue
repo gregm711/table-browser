@@ -21,6 +21,8 @@
 
 <script>
 import { Grid, Data, Formatters } from 'slickgrid-es6';
+import JQuery from 'jquery'
+import Trend from 'vuetrend';
 
 
 export default {
@@ -28,6 +30,9 @@ export default {
   data () {
     return {
     }
+  },
+  components: {
+    Trend,
   },
   props: {
   rows: Array,
@@ -53,6 +58,7 @@ watch: {
         fullWidthRows: true,
         showHeaderRow: true,
         defaultColumnWidth: 200,
+        rowHeight: 200,
         asyncEditorLoading: true,
         enableAsyncPostRender: true,
         };
@@ -69,10 +75,44 @@ watch: {
       var dict = {name: this.columns[i],  field: this.columns[i],  id: this.columns[i],  selectable: true, sortable: true, }
       formattedColumns.push(dict)
     }
-        const grid = new Grid('#myGrid', dataView, formattedColumns, options);
+     var chart = {id: "chart", name: "Chart", sortable: false, width: 600, height: 400, formatter: this.waitingFormatter, rerenderOnResize: true, asyncPostRender: this.renderSparkline}
+     formattedColumns.push(chart)
+      const grid = new Grid('#myGrid', dataView, formattedColumns, options);
     },
 
+    renderSparkline(cellNode, row, dataContext, colDef) {
+
+    var vals = [
+      10,
+      12,
+      13,
+      14,
+      12,
+    ]
+    return (
+      <div style={{ height: "100%" }}>
+        asd
+      </div>
+    );
+
+        // return `<trend :data="[0, 2, 5, 9, 5, 10, 3, 5, 0, 0, 1, 8, 2, 9, 0]" :gradient="['#6fa8dc', '#42b983', '#2c3e50']"auto-draw smooth> </trend>`
+
+    },
+    waitingFormatter(){
+
+      return (
+        <div>
+          asd
+        </div>
+      );
+      // return `<trends :data="[0, 2, 5, 9, 5, 10, 3, 5, 0, 0, 1, 8, 2, 9, 0]" :gradient="['#6fa8dc', '#42b983', '#2c3e50']"auto-draw smooth> </trends>`
+    }
+
   },
+
+  render: function (createElement) {
+  return createElement('h1', "asd")
+},
 }
 </script>
 

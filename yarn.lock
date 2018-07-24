@@ -7617,6 +7617,12 @@ vue-scroll-sync@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/vue-scroll-sync/-/vue-scroll-sync-1.0.4.tgz#b037a53be6843f935830dc87a1382cfdbcdb6221"
 
+vue-sparklines@^0.1.6:
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/vue-sparklines/-/vue-sparklines-0.1.6.tgz#853d1b75f896aa5b78304d0dfd9492ab990e62f0"
+  dependencies:
+    vue "^2.2.1"
+
 vue-style-loader@^4.1.0:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/vue-style-loader/-/vue-style-loader-4.1.1.tgz#7c1d051b24f60b1707602b549ed50b4c8111d316"
@@ -7644,9 +7650,13 @@ vue-vega@^1.0.0-alpha.13:
     vega-lite "^2.0.3"
     vue "^2.3.3"
 
-vue@^2.3.3, vue@^2.5.16:
+vue@^2.2.1, vue@^2.3.3, vue@^2.5.16:
   version "2.5.16"
   resolved "https://registry.yarnpkg.com/vue/-/vue-2.5.16.tgz#07edb75e8412aaeed871ebafa99f4672584a0085"
+
+vuetrend@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/vuetrend/-/vuetrend-0.3.2.tgz#13100862ded562c78d3704c3865cd38c582e586a"
 
 watchpack@^1.5.0:
   version "1.6.0"

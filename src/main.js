@@ -2,10 +2,9 @@ import Vue from 'vue'
 import App from './App'
 import BootstrapVue from 'bootstrap-vue'
 import VueVega from 'vue-vega'
-import ScrollSync from 'vue-scroll-sync';
+import Trend from 'vuetrend';
 
-
-Vue.use(ScrollSync);
+Vue.use(Trend);
 Vue.use(VueVega);
 Vue.use(BootstrapVue);
 Vue.config.productionTip = false

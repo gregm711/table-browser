@@ -73,16 +73,9 @@ export default {
         },
         grouped: function(val) {
 
-            var query = "SELECT ";
-            if (this.selected.length != this.columns.length) {
-                this.selected.forEach((elem) => {
-                    query += elem + ", ";
-                })
-                query = query.slice(0, -2);
-                query += " FROM " + this.tableName;
-                query = query.replace(/,\s*$/, "");
-                this.executeQuery(query)
-            }
+          console.log("grouped changed")
+
+
         },
         rows: function(val) {
 
