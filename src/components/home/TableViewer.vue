@@ -55,15 +55,29 @@ watch: {
         fullWidthRows: true,
         showHeaderRow: true,
         defaultColumnWidth: 100,
+        asyncEditorLoading: true,
+        enableAsyncPostRender: true,
         };
-    var positions = this.rows;
+
+   //
+   const dataView = new Data.DataView();
+    var formattedData = [];
+    for (let i = 0; i < this.rows.length; i++){
+
+      const d = this.rows[i];
+      d.id = i
+      formattedData.push(d)
+    }
+    dataView.setItems(formattedData); // some data
+
+
     var columns = this.columns;
     var formattedColumns = [];
-    for (var i =0; i < columns.length; i++){
+    for (let i =0; i < columns.length; i++){
       var dict = {name: columns[i],  field: columns[i],  id: columns[i],  selectable: true, sortable: true, }
       formattedColumns.push(dict)
     }
-        const grid = new Grid('#myGrid', positions, formattedColumns, options);
+        const grid = new Grid('#myGrid', dataView, formattedColumns, options);
     },
 
   },

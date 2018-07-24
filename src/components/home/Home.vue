@@ -40,6 +40,9 @@
 import TableViewer from './TableViewer'
 import Papa from 'papaparse'
 import sql from 'sql.js'
+import sizeof from 'object-sizeof';
+
+
 export default {
   name: 'Home',
   data () {
@@ -58,7 +61,8 @@ export default {
       distributions: [],
       encodings: [],
       options: [],
-      grouped: []
+      grouped: [],
+      myWorker: null,
     }
   },
 
@@ -102,16 +106,31 @@ export default {
         const fileToLoad = event.target.files[0]
         const reader = new FileReader()
         reader.onload = fileLoadedEvent => {
+          var batchArr = []
+          that.createDB();
           Papa.parse(fileLoadedEvent.target.result, {
-              header: true,
-              fastMode: true,
-              dynamicTyping: true,
-              
-              complete(results) {
-                console.log("done")
-                  that.rows = results.data
-                  that.createDB(results.data)
-              },
+            header: true,
+            fastMode: true,
+            dynamicTyping: true,
+
+            step: function(row) {
+              batchArr.push(row.data)
+              if (batchArr.length == 1000) {
+
+                that.addDataToDB(batchArr)
+                batchArr = [];
+                console.log("batch")
+                }
+          	},
+        	   complete: function() {
+               console.log("all done")
+               that.executeQuery("SELECT * FROM tableName");
+
+
+            		// console.log("All done!", results.data.length);
+                // that.rows = results.data;
+                // that.createDB();
+            	},
               error(errors) {
                   console.log('error', errors)
               }
@@ -151,30 +170,39 @@ export default {
 
     },
 
-    createDB(data) {
+    addDataToDB(batchedData){
 
-        const columns  = this.columns;
-        this.db = new sql.Database();
-        var sqlstr = "CREATE TABLE tableName (";
-        for (var i = 0; i < columns.length; i++) {
 
-            var type = "varchar"
+      var sqlstr = "";
 
-            if (i == columns.length - 1) {
-                sqlstr += columns[i] + " " + type;
-            } else {
-                sqlstr += columns[i] + " " + type + ", ";
-            }
-        }
-        sqlstr += ");";
-        data.forEach((elem) => {
+      for (let i =0; i < batchedData.length; i++){
+        batchedData[i].forEach((elem) => {
             sqlstr += "INSERT INTO tableName VALUES (";
             Object.keys(elem).forEach(key => {
                     sqlstr += "'" + String(elem[key]) + "'" + ", ";
             })
             sqlstr = sqlstr.slice(0, -2) + ");"
         })
+      }
+      this.db.run(sqlstr);
+
+    },
+    createDB() {
+        this.db = new sql.Database();
+        var sqlstr = "CREATE TABLE tableName (";
+        for (let i = 0; i < this.columns.length; i++) {
+
+            const type = "varchar"
+
+            if (i == this.columns.length - 1) {
+                sqlstr += this.columns[i] + " " + type;
+            } else {
+                sqlstr += this.columns[i] + " " + type + ", ";
+            }
+        }
+        sqlstr += ");";
         this.db.run(sqlstr);
+
     },
     executeQuery(query) {
         var contents = this.db.exec(query);
@@ -198,12 +226,22 @@ export default {
   },
 
   mounted: function () {
-    for (var i = 0; i < this.columns.length; i++){
+    for (let i = 0; i < this.columns.length; i++){
 
       this.selected.push(this.columns[i])
       this.options.push({text: this.columns[i], value: this.columns[i]})
       }
     },
+    created() {
+    //
+    //   this.myWorker = this.$worker.create([
+    //   {message: 'message1', func: (arg) => `Output 1 ${arg}`},
+    //   {message: 'message2', func: () => 'Output 2'}
+    // ])
+     this.myWorker = this.$worker.create([{message: 'addToRows', func: (data, that) => this.rows.push(data)}])
+
+
+ }
 }
 </script>
 
