@@ -2,7 +2,6 @@
     <div class="home">
         <h1>Upload EXWRK csv</h1>
         <div style="margin-top: 3rem;">
-
         <input id="fileInput" class="input" type="file" @change="upload" style="padding: 2rem; margin: 0 auto;">
       </div>
         <div class="wrapper" v-if="this.rows.length > 0">
@@ -41,6 +40,7 @@ import TableViewer from './TableViewer'
 import Papa from 'papaparse'
 import sql from 'sql.js'
 import sizeof from 'object-sizeof';
+import alasql from 'alasql'
 
 
 export default {
@@ -48,7 +48,6 @@ export default {
   data () {
     return {
       rows: [],
-      db: null,
       query: "",
       selected: [], // Must be an array reference!
       columns : ['WKR_ID',	'L1_KEY',	'DSG_CHG_ID',	'L1_DSG_CHG_PRT_NO',	'L1_BASIC_PRT_NO',
@@ -62,7 +61,6 @@ export default {
       encodings: [],
       options: [],
       grouped: [],
-      myWorker: null,
     }
   },
 
@@ -113,23 +111,19 @@ export default {
             fastMode: true,
             dynamicTyping: true,
 
-            step: function(row) {
-              batchArr.push(row.data)
-              if (batchArr.length == 1000) {
-
-                that.addDataToDB(batchArr)
-                batchArr = [];
-                console.log("batch")
-                }
-          	},
-        	   complete: function() {
+            // step: function(row) {
+            //   batchArr.push(row.data)
+            //   if (batchArr.length == 1000) {
+            //
+            //     that.addDataToDB(batchArr)
+            //     batchArr = [];
+            //     console.log("batch")
+            //     }
+          	// },
+        	   complete: function(results) {
                console.log("all done")
-               that.executeQuery("SELECT * FROM tableName");
-
-
-            		// console.log("All done!", results.data.length);
-                // that.rows = results.data;
-                // that.createDB();
+                that.rows = results.data;
+                that.createAlasqDB()
             	},
               error(errors) {
                   console.log('error', errors)
@@ -140,58 +134,57 @@ export default {
         reader.readAsText(fileToLoad)
     },
 
-    createDistributions(){
-      // SELECT " + this.columns[i] + ",  COUNT(*) FROM  tableName GROUP BY
-        // var newDistributions = [];
-        //
-        // var newEncodings = [];
-        // for (var i =0; i < this.columns.length; i++){
-        //   var groupQuery = "SELECT " + this.columns[i] + ",  COUNT(*) FROM  tableName GROUP BY " + this.columns[i] + ";"
-        //   var contents = this.db.exec(groupQuery);
-        //   var rows = contents[0].values
-        //   var newData = [];
-        //   for (var j = 0; j < rows.length; j++) {
-        //     var entry = {a: rows[j][0], b: rows[j][1]}
-        //     newData.push(entry)
-        //   }
-        //     var encoding = {
-        //         x: {field: 'a', type: 'ordinal'},
-        //         y: {field: 'b', type: 'quantitative'}
-        //       }
-        //   newDistributions.push(newData)
-        //   newEncodings.push(encoding)
-        //
-        //
-        // }
-        //
-        //
-        // this.distributions = newDistributions;
-        // this.encodings = newEncodings;
+    createAlasqDB(){
 
+      var sqlstr = "CREATE TABLE tableName (";
+      for (let i = 0; i < this.columns.length; i++) {
+
+          const type = "varchar"
+
+          if (i == this.columns.length - 1) {
+              sqlstr += this.columns[i] + " " + type;
+          } else {
+              sqlstr += this.columns[i] + " " + type + ", ";
+          }
+      }
+      sqlstr += ")";
+      alasql(sqlstr);
+      alasql.tables.tableName.data = this.rows
     },
 
-    addDataToDB(batchedData){
+    createDistributions(){
 
+        var newDistributions = [];
 
-      var sqlstr = "";
+        var newEncodings = [];
+        for (var i =0; i < this.columns.length; i++){
+          let groupQuery = "SELECT " + this.columns[i] + ",  COUNT(*) FROM  tableName GROUP BY " + this.columns[i] + ";"
+          let res = alasql(groupQuery);
+          var newData = [];
+          for (var j = 0; j < res.length; j++) {
+            let row   = res[j]
+            let keys  = Object.keys(row)
+            let entry = {a: row[keys[0]], b: row[keys[1]]}
 
-      for (let i =0; i < batchedData.length; i++){
-        batchedData[i].forEach((elem) => {
-            sqlstr += "INSERT INTO tableName VALUES (";
-            Object.keys(elem).forEach(key => {
-                    sqlstr += "'" + String(elem[key]) + "'" + ", ";
-            })
-            sqlstr = sqlstr.slice(0, -2) + ");"
-        })
-      }
-      this.db.run(sqlstr);
+            newData.push(entry)
+          }
+        let encoding = {
+            x: {field: 'a', type: 'ordinal'},
+            y: {field: 'b', type: 'quantitative'}
+          }
+
+          newDistributions.push(newData)
+          newEncodings.push(encoding)
+        }
+
+        this.distributions = newDistributions;
+        this.encodings = newEncodings;
 
     },
     createDB() {
         this.db = new sql.Database();
         var sqlstr = "CREATE TABLE tableName (";
         for (let i = 0; i < this.columns.length; i++) {
-
             const type = "varchar"
 
             if (i == this.columns.length - 1) {
@@ -204,24 +197,11 @@ export default {
         this.db.run(sqlstr);
 
     },
+
     executeQuery(query) {
-        var contents = this.db.exec(query);
-        var newData = [];
-        var columns = contents[0].columns
-        var rows = contents[0].values
-        var newDataArr = []
-
-        for (var j = 0; j < rows.length; j++) {
-
-            var newData = {};
-            for (var i = 0; i < columns.length; i++) {
-                newData[columns[i]] = rows[j][i];
-            }
-            newDataArr.push(newData)
-        }
-        this.rows = newDataArr;
-        this.columns  = columns;
-
+      var res = alasql(query);
+      this.rows = res
+      this.columns = Object.keys(res[0])
     },
   },
 
@@ -232,16 +212,6 @@ export default {
       this.options.push({text: this.columns[i], value: this.columns[i]})
       }
     },
-    created() {
-    //
-    //   this.myWorker = this.$worker.create([
-    //   {message: 'message1', func: (arg) => `Output 1 ${arg}`},
-    //   {message: 'message2', func: () => 'Output 2'}
-    // ])
-     this.myWorker = this.$worker.create([{message: 'addToRows', func: (data, that) => this.rows.push(data)}])
-
-
- }
 }
 </script>
 

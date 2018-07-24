@@ -5,7 +5,7 @@ import VueVega from 'vue-vega'
 import VueWorker from 'vue-worker';
 Vue.use(VueWorker);
 
-Vue.use(VueVega)
+Vue.use(VueVega);
 
 Vue.use(BootstrapVue);
 

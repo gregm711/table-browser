@@ -8,11 +8,11 @@
       <div class="menu"></div>
     </div>
     <div class="demo column is-two-thirds">
-      <!-- <div class="column-dists-wrapper">
+      <div class="column-dists-wrapper">
         <div v-for="(value, i) in distributions" class="column-dist">
         <vega-lite :data="distributions[i]" mark="bar"  :encoding="encodings[i]"/>
       </div>
-      </div> -->
+      </div>
       <div id="myGrid" style="height:600px;" class="slickgrid-container"></div>
     </div>
     <div class="controls column"></div>
@@ -25,6 +25,7 @@
 import Papa from 'papaparse'
 import sql from 'sql.js'
 import { Grid, Data, Formatters } from 'slickgrid-es6';
+
 export default {
   name: 'TableViewer',
   data () {
